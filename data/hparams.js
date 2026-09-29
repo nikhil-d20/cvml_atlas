@@ -1,10 +1,55 @@
 (function () {
 const R = String.raw, T = CV.tbl;
 CV.tab({
-  id: 'hp', title: 'Hyperparameter & Practical Guide', short: 'Hyperparams', icon: '🎛',
+  id: 'hp', title: 'Practical Guide: FP/FN Playbook & Hyperparameters', short: 'Practical Guide', icon: '🎛',
   blurb: 'Which hyperparameter for which situation: data size, compute, imbalance, small objects, debugging, recipes.',
   intro: 'Opinionated, field-tested defaults. Start here, change one thing at a time, and log everything.',
   sections: [
+  { id: 'errors', title: 'FP / FN Playbook: reduce false positives, false negatives, or both', intro: 'Start here when a trained model makes the wrong kind of mistakes. Enter your task and error counts in the advisor to get an ordered strategy; the tables below explain every lever and what it trades off.', items: [
+    { id: 'advisor', t: 'FP / FN strategy advisor (interactive)', tags: 'reduce false positives,reduce false negatives,fp fn strategy,false alarm,missed detection,improve precision,improve recall', wide: true,
+      s: 'Pick the task and the problem (optionally paste TP / FP / FN from your validation run). You get the levers in the order to try them: cheapest and safest first.', widget: 'fpfn' },
+    { id: 'calc', t: 'Precision / recall / F-beta calculator', tags: 'precision recall calculator,f1 score calculator,mcc,confusion matrix calculator,f2 f0.5', wide: true,
+      s: 'Enter confusion-matrix counts from your validation set.', widget: 'prcalc',
+      f: [R`P=\frac{TP}{TP+FP}\;(\text{FP}\downarrow\Rightarrow P\uparrow),\;\;R=\frac{TP}{TP+FN}\;(\text{FN}\downarrow\Rightarrow R\uparrow),\;\;F_\beta=\frac{(1+\beta^2)PR}{\beta^2P+R}`] },
+    { id: 'cost', t: 'Which error is more expensive?', tags: 'cost of errors,fp vs fn cost,f-beta choice,operating point business,precision recall tradeoff',
+      h: T(['Use case', 'Costlier error', 'Target'], [['Medical screening, safety (pedestrians, PPE, fire)', 'FN (a miss)', 'recall ≥ 0.95–0.99 at the best achievable precision; F2'], ['Alerting / security / fraud review queues', 'FP (alert fatigue)', 'precision ≥ 0.9; F0.5'], ['Industrial defect inspection', 'usually FN (escaped defect) — but FPs cost re-inspection', 'recall target + max FP rate per 1000 parts'], ['Auto-labeling pipelines', 'FP (bad labels propagate)', 'high precision, humans fill recall'], ['Retail / analytics counts', 'balanced', 'F1 or count error']]),
+      tip: 'Write the target down as "recall ≥ X at precision ≥ Y on dataset Z" before training. It decides the threshold, the loss weighting and which data to collect.' },
+    { id: 'levers', t: 'Lever effects on FP and FN (cheat-sheet)', tags: 'threshold tuning,nms iou,class weights,focal loss alpha,tversky,background images,hard negative mining,lever effects', wide: true,
+      h: T(['Lever', 'FP', 'FN', 'Notes'], [
+        ['Confidence / probability threshold ↑', '↓', '↑', 'cheapest; tune on validation PR curve, per class if needed'],
+        ['NMS IoU threshold ↓ (detection)', '↓ (duplicates)', '↑ (crowded objects)', 'or switch to NMS-free / Soft-NMS'],
+        ['Max detections ↑ / queries ↑', '—', '↓', 'crowded scenes (300 → 1000)'],
+        ['Background / negative images (0–10%)', '↓', '≈', 'Ultralytics tip: images with no labels reduce false alarms'],
+        ['Hard-negative mining (look-alikes)', '↓', '≈', 'mine from production false alarms'],
+        ['More / more diverse positives', '≈', '↓', 'target the missed conditions (size, light, occlusion)'],
+        ['Complete labels (no missing boxes)', '↓ (apparent)', '↓', 'unlabelled objects teach the model to ignore them and count as FPs in eval'],
+        ['Positive class weight / pos_weight ↑', '↑', '↓', 'imbalanced binary problems'],
+        ['Focal loss (γ = 2) / α toward positives', '≈/↑', '↓', 'imbalance; check calibration afterwards'],
+        ['Tversky α > β (seg)', '↓', '↑', 'α = 0.7, β = 0.3'],
+        ['Tversky β > α / Focal Tversky (seg)', '↑', '↓', 'small / thin structures'],
+        ['Input resolution ↑ / tiling (SAHI)', '≈', '↓ (small objects)', 'cost: latency'],
+        ['Bigger / better pre-trained model', '↓', '↓', 'the only lever that improves both at a fixed threshold, together with better data'],
+        ['TTA / ensembles', '↓', '↓', 'offline only; WBF for detection'],
+        ['Temporal consistency (k of N frames, tracking)', '↓', '≈/↓', 'video; tracking also bridges short misses'],
+        ['Min-area / geometry / ROI filters', '↓', '≈', 'post-processing rules from domain knowledge']]) },
+    { id: 'analysis', t: 'Error analysis before changing anything', tags: 'error analysis,tide,fp categories,fn categories,failure analysis,fiftyone,confusion matrix',
+      h: R`<p>Sample 50–100 FPs and 50–100 FNs from the validation set and put each in a bucket. The biggest bucket decides the fix.</p>` +
+        T(['Bucket', 'Typical fix'], [['FP: background (nothing there)', 'background images, hard negatives, higher threshold'], ['FP: duplicate box on same object', 'NMS IoU ↓, NMS-free model'], ['FP: wrong class (class confusion)', 'more data for the confused pair, merge classes, per-class thresholds'], ['FP: poor localization (IoU < 0.5)', 'box loss weight ↑, higher res, better box head'], ['FP that is actually correct (missing label)', 'fix labels — this is an evaluation error, not a model error'], ['FN: small / far objects', 'resolution ↑, tiling, P2 head, less downscale aug'], ['FN: occluded / truncated', 'more occluded examples, copy-paste occluders, lower NMS suppression'], ['FN: rare class / rare appearance', 'collect targeted data, oversample, class weights'], ['FN: domain shift (night, blur, new camera)', 'collect from the new domain, photometric / blur / JPEG aug']]) +
+        R`<p>For detection, TIDE-style breakdowns (classification, localization, both, duplicate, background, missed) quantify how much mAP each error type costs.</p>` },
+    { id: 'workflow', t: 'Step-by-step workflow for fixing FPs / FNs', tags: 'workflow reduce errors,model improvement process,iterative improvement,data centric workflow', wide: true,
+      h: R`<ol>
+        <li><b>Freeze a trustworthy validation set:</b> representative of production, labelled carefully, split by group (camera / video / patient), with enough examples per class (≥ 50–100 instances for stable per-class numbers).</li>
+        <li><b>Define the target</b> (e.g. recall ≥ 0.95 at precision ≥ 0.8) and measure the baseline PR curve per class.</li>
+        <li><b>Error analysis</b> (card above): bucket 50–100 FPs and FNs.</li>
+        <li><b>Cheap levers first:</b> threshold per class, NMS IoU, max detections, post-processing filters. Re-measure.</li>
+        <li><b>Data:</b> fix labels, add hard negatives / background images for FPs, add targeted positives for FNs. This is usually the biggest win.</li>
+        <li><b>Loss & sampling:</b> class weights, focal / Tversky settings, assignment top-k.</li>
+        <li><b>Model:</b> resolution, larger model, better pre-training, longer schedule, EMA.</li>
+        <li><b>Re-measure on the same validation set</b> after each change; keep a log of (change → P, R, per-class AP).</li>
+        <li><b>Production monitoring:</b> sample live predictions weekly, review FPs / low-confidence cases, feed them back as training data.</li></ol>` },
+    { id: 'inputs', t: 'What training data (valid inputs) to collect', tags: 'how much data,data collection guide,images per class,instances per class,background images,label quality,annotation guideline',
+      h: T(['Input', 'Guideline'], [['Images per class', 'detection: ≥ 1,500 images and ≥ 10,000 labelled instances per class is the Ultralytics recommendation for strong results; fewer works with good pre-training (see Few-shot tab)'], ['Variety', 'cover production conditions: time of day, weather, camera angle and height, distance, motion blur, occlusion, compression'], ['Background images', '0–10% of the dataset with no objects, taken from the deployment scene — reduces FPs'], ['Hard negatives', 'look-alikes that the current model fires on (reflections, posters, similar products)'], ['Label consistency', 'written guideline: every instance labelled, tight boxes, occlusion / truncation policy, "ignore" regions; review 5–10% twice'], ['Class balance', 'aim for ≤ 1:10 between common and rare classes, or use sampling / weights'], ['Resolution', 'label and train at the resolution you deploy; objects should be ≥ ~16 px at the model input'], ['Split hygiene', 'no near-duplicates or same-scene frames across train / val / test']]) }
+  ]},
   { id: 'strategy', title: 'Choosing a Strategy', items: [
     { id: 'datasize', t: 'Data size → training strategy', tags: 'transfer learning,fine-tuning,from scratch,small dataset,few-shot',
       h: T(['Labelled images', 'Strategy', 'Key hyperparameters'], [

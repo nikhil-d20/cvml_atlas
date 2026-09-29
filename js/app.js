@@ -202,10 +202,12 @@
       ${(it.f || []).map(f => `<div class="f">$$${esc(f)}$$</div>`).join('')}
       ${it.dg ? `<div class="dgwrap">${CVDiagram.pipeline(it.dg)}</div>` : ''}
       ${it.dgc ? `<div class="dgrow">${it.dgc.map(c => `<div>${CVDiagram.chain(c)}</div>`).join('')}</div>` : ''}
+      ${it.lr ? `<div class="widget lrmini" data-widget="lrcurve" data-args="${esc(JSON.stringify(it.lr))}"></div>` : ''}
       ${it.h ? `<div class="body">${it.h}</div>` : ''}
+      ${it.widget ? `<div class="widget" data-widget="${esc(it.widget)}" data-args="${esc(JSON.stringify(it.wargs || {}))}"></div>` : ''}
       ${it.tip ? `<div class="tip"><b>Practical</b> ${it.tip}</div>` : ''}
       ${it.code ? `<details class="code"><summary>Implementation</summary><pre><code>${esc(it.code.replace(/^\n/, ''))}</code></pre></details>` : ''}
-      ${it.added || it.src ? `<div class="cardfoot">${it.added ? `added ${esc(it.added)}` : ''}${it.updated ? ` · updated ${esc(it.updated)}` : ''}${it.src ? ` · <a href="${esc(it.src)}" target="_blank" rel="noopener noreferrer">source</a>` : ''}</div>` : ''}
+      ${it.added || it.src ? `<div class="cardfoot">${it.added ? `added ${esc(it.added)}` : ''}${it.updated && it.updated !== it.added ? ` · updated ${esc(it.updated)}` : ''}${it.src ? ` · <a href="${esc(it.src)}" target="_blank" rel="noopener noreferrer">source</a>` : ''}</div>` : ''}
     </article>`;
   }
 
@@ -289,6 +291,7 @@
       ${tab.sections.map(sec => `<section class="sec" id="${sec.fid}"><h2>${esc(sec.title)}</h2>${sec.intro ? `<p class="secintro">${sec.intro}</p>` : ''}
         <div class="cards">${sec.items.map(renderItem).join('')}</div></section>`).join('')}`;
     typeset(mainEl);
+    if (window.CVWidgets) CVWidgets.mountAll(mainEl);
     const tf = $('.tabfilter', tocEl);
     tf.addEventListener('input', () => filterTab(tab, tf.value));
   }
@@ -325,7 +328,7 @@
     const whatsNew = `<h2>What's new <small class="note">content last updated ${esc(CV.contentUpdated || '—')} · refreshed weekly · NEW = added in the last ${NEW_DAYS} days</small></h2>
       ${fresh.length ? `<ul class="fresh">${fresh.slice(0, 30).map(f => `<li><span class="new">${f.upd ? 'UPDATED' : 'NEW'}</span> <em>${esc(f.date)}</em> ${f.html}</li>`).join('')}</ul>` : '<p class="note">Nothing added in the last 30 days.</p>'}
       ${log.length ? `<details class="log"><summary>Update log</summary><ul>${log.map(c => `<li><em>${esc(c.date)}</em> ${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener noreferrer">${esc(c.text)}</a>` : esc(c.text)}</li>`).join('')}</ul></details>` : ''}`;
-    const quick = [['Loss functions', 'loss function'], ['Focal loss', 'focal loss'], ['Optimizers', 'optimizer'], ['LR schedulers', 'learning rate scheduler'], ['Warmup', 'warmup'], ['Batch size ↔ LR', 'linear scaling rule'], ['IoU losses', 'giou ciou'], ['NMS', 'non-maximum suppression'], ['mAP', 'mean average precision'], ['Receptive field', 'receptive field'], ['Attention', 'self-attention'], ['Diffusion', 'ddpm'], ['Flow matching', 'flow matching'], ['LoRA', 'lora'], ['Quantization', 'quantization']];
+    const quick = [['Reduce false positives', 'reduce false positives'], ['Reduce false negatives', 'reduce false negatives'], ['LR schedule explorer', 'lr schedule explorer'], ['Which scheduler when?', 'which scheduler'], ['Encoder vs decoder', 'encoder decoder'], ['Few-shot: what to use', 'few-shot decision guide'], ['Distillation process', 'distillation process'], ['Loss functions', 'loss function'], ['Focal loss', 'focal loss'], ['Optimizers', 'optimizer'], ['LR schedulers', 'learning rate scheduler'], ['Warmup', 'warmup'], ['Batch size ↔ LR', 'linear scaling rule'], ['IoU losses', 'giou ciou'], ['NMS', 'non-maximum suppression'], ['mAP', 'mean average precision'], ['Receptive field', 'receptive field'], ['Attention', 'self-attention'], ['Diffusion', 'ddpm'], ['Flow matching', 'flow matching'], ['LoRA', 'lora'], ['Quantization', 'quantization']];
     mainEl.innerHTML = `<div class="hero"><h1>CV/ML Atlas</h1>
       <p>A one-stop reference for computer-vision engineers: <b>formulas first</b>, crisp explanations, detailed layer layouts, leaderboards with the newest models on top, and practical hyperparameter guidance. ${nItems} topic cards across ${CV.tabs.length} tabs.</p>
       <p class="kbd">Press <kbd>/</kbd> or <kbd>Ctrl</kbd>+<kbd>K</kbd> to search. Tick “this tab only” to search within the current tab. Search tolerates typos (“loss fuctions” works).</p><p class="kbd" id="otaInfo">${otaInfoHtml()}</p></div>
