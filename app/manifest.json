@@ -1,7 +1,7 @@
 {
- "version": "202609290812",
+ "version": "202609290821",
  "min_shell": 2,
- "built": "2026-09-29T08:12:44",
+ "built": "2026-09-29T08:21:04",
  "files": {
   "css/style.css": "fe9e34ccaf05b8005f6695e22d0536b1435a6c76839f0bcaf20cf1e94dafaf23",
   "data/arch_cls.js": "d3fdf556be38349d09182249e571c68b9d29954f8d79432920274444789c2ef0",
@@ -23,7 +23,7 @@
   "data/training.js": "afc6b9f23c87eefebd5a03b5bae727946b5e36c9f9821ed570f6c68f44033b3f",
   "data/updates.js": "15d7d6a085412284f8565fd4b421716219903c876fe48cf244cc6e72e155d713",
   "data/vision_plus.js": "1771466e98535d5922133777a2074578d09eb91df16a3a0bc9999f6bb9a028cc",
-  "index.html": "7acaff0e1f4d19afd8d05c6346a3b2c3365e049aff91ca5a15ede3923cf5c395",
+  "index.html": "f037f205ccc24a9e6ec7acb19a33695dbdbe2cf8bea20560dbf632188ac8d26a",
   "js/app.js": "e3baecbae4090823bf7913949ce525fbc9c060489c0990b977e95679063592f7",
   "js/core.js": "c161c5f3956e0155fca174cf40dbcb50c849ce2384d390e6654f9aac8d8ea864",
   "js/diagram.js": "5debcaee54da31f9227a9f7de12566124ea85f42dcd130aa57ebf6896c09d57f",
