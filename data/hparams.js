@@ -1,0 +1,126 @@
+(function () {
+const R = String.raw, T = CV.tbl;
+CV.tab({
+  id: 'hp', title: 'Hyperparameter & Practical Guide', short: 'Hyperparams', icon: '🎛',
+  blurb: 'Which hyperparameter for which situation: data size, compute, imbalance, small objects, debugging, recipes.',
+  intro: 'Opinionated, field-tested defaults. Start here, change one thing at a time, and log everything.',
+  sections: [
+  { id: 'strategy', title: 'Choosing a Strategy', items: [
+    { id: 'datasize', t: 'Data size → training strategy', tags: 'transfer learning,fine-tuning,from scratch,small dataset,few-shot',
+      h: T(['Labelled images', 'Strategy', 'Key hyperparameters'], [
+        ['< 100 / class', 'Linear probe or few-shot on frozen foundation features (DINOv2/v3, CLIP, SigLIP); open-vocab detectors (Grounding DINO, YOLO-World) for zero-shot', 'LR 1e-3 head only; strong aug; k-NN baseline'],
+        ['100 – 1k / class', 'Fine-tune pretrained model, maybe freeze early stages', 'LR 1e-4 (AdamW) / 1e-3 (SGD); LLRD 0.7; WD 0.05; 30–100 ep; heavy aug'],
+        ['1k – 10k / class', 'Full fine-tune', 'LR 1e-4–5e-4; cosine; warmup 3–5 ep; mixup/cutmix for cls'],
+        ['> 1M total', 'Pre-train / train from scratch possible', 'Full recipe (see below), 300+ ep, EMA'],
+        ['Unlabelled pool large', 'Self-supervised pre-training (MAE/DINO) or pseudo-labelling (teacher → student)', 'Confidence threshold 0.5–0.9; iterate']]) },
+    { id: 'compute', t: 'Compute budget → model size', tags: 'model selection,latency budget,edge,compute',
+      h: T(['Deployment target', 'Detection', 'Classification', 'Segmentation'], [
+        ['MCU / tiny edge', 'DEIMv2-Pico/Femto, YOLO26n int8', 'MobileNetV4-S, MCUNet', 'Lite-HRNet, PP-LiteSeg'],
+        ['Mobile / Jetson Orin Nano', 'YOLO26n/s, RF-DETR-N, D-FINE-N', 'MobileNetV4-M, EfficientNet-B0, FastViT', 'YOLO26n-seg, SegFormer-B0'],
+        ['Edge GPU (Orin AGX, T4)', 'YOLO26m, RF-DETR-S/M, DEIMv2-S/M', 'ConvNeXt-T, EfficientNetV2-S', 'RF-DETR-Seg-S, SegFormer-B2'],
+        ['Server GPU, real-time', 'RF-DETR-L/2XL, DEIMv2-X, YOLO26x', 'ConvNeXt-B, Swin-B, ViT-B', 'Mask2Former-R50/Swin-B'],
+        ['Offline / max accuracy', 'Co-DETR, DINO Swin-L/ViT-L + O365', 'EVA-02-L, DINOv3 7B probes', 'Mask2Former/OneFormer Swin-L, SAM-based']]) }
+  ]},
+  { id: 'hparams', title: 'Hyperparameter Rules of Thumb', items: [
+    { id: 'lr', t: 'Learning rate — the #1 knob', tags: 'learning rate,lr tuning,lr finder,learning rate scheduler',
+      h: R`<ul><li>Tune LR on a log grid ×3: {1e-5, 3e-5, 1e-4, 3e-4, 1e-3, 3e-3}. Tune it <b>first</b>, then WD, then aug.</li>
+        <li>Loss explodes/NaN early → LR too high or no warmup. Loss decreasing very slowly & train acc low → LR too low.</li>
+        <li>Fine-tuning: 10–100× lower than from-scratch. Pretrained backbone + new head: head LR 10× backbone LR.</li>
+        <li>Changing batch size ×k: SGD LR ×k; AdamW LR ×√k (up to ×k for moderate k).</li>
+        <li>Transformer training unstable? lower LR, longer warmup, β₂=0.95, clip-norm 1.0, QK-norm.</li></ul>` },
+    { id: 'bs', t: 'Batch size', tags: 'batch size,memory,gradient accumulation,generalization',
+      h: R`<ul><li>Use the largest batch that fits for throughput; beyond ~1–4k (cls) returns diminish and generalization can drop without LR retuning.</li>
+        <li>BatchNorm needs ≥ 16/GPU (else SyncBN, GN, or frozen BN). Detection: 2–8 img/GPU typical, total 16–64.</li>
+        <li>Very small datasets: small batches (16–32) add useful gradient noise.</li>
+        <li>Gradient accumulation matches effective batch but not BN statistics.</li></ul>` },
+    { id: 'wdguide', t: 'Weight decay & regularization strength', tags: 'weight decay,dropout,drop path,overfitting',
+      h: T(['Symptom / setting', 'Adjust'], [
+        ['Train ≫ val (overfit)', '↑ WD (×2–5), ↑ drop-path, ↑ aug, mixup/cutmix, label smoothing, early stop, more data'],
+        ['Train & val both poor (underfit)', '↓ WD, ↓ aug, ↓ dropout, bigger model, train longer, higher LR'],
+        ['ViT from scratch on < 1M imgs', 'Don’t — use pretrained or ConvNet; else strong aug + WD 0.05–0.3 + SAM'],
+        ['Short fine-tune', 'WD 0.01–0.05, drop-path 0.1, mixup off or light']]) },
+    { id: 'epochs', t: 'Epochs & schedule length', tags: 'epochs,training length,iterations,budget',
+      h: T(['Task / setting', 'Typical length'], [
+        ['ImageNet ResNet-50 (classic / modern)', '90 ep / 300–600 ep (RSB A1)'], ['ViT/DeiT from scratch', '300 ep (DeiT), 800–1600 MAE pre-train'],
+        ['Fine-tune cls on custom data', '20–100 ep'], ['YOLO from pretrained on custom', '100–300 ep, patience 50'],
+        ['Faster/Mask R-CNN', '1× = 12 ep, 3× = 36 ep'], ['DETR / Deformable / DINO / RT-DETR', '500 / 50 / 12–36 / 72 ep'],
+        ['Semantic seg (ADE20K)', '160k iters @ bs16'], ['Pose (COCO top-down)', '210–420 ep'], ['DiT / latent diffusion', '400k – 7M steps']]) },
+    { id: 'res', t: 'Input resolution', tags: 'resolution,image size,imgsz,fixres,small objects',
+      h: R`<ul><li>Accuracy ∝ resolution until the object scale saturates; FLOPs ∝ \(H\times W\).</li>
+        <li><b>FixRes effect</b>: RandomResizedCrop makes objects look bigger in training → test at ~1.15× train resolution, or fine-tune at test res for a few epochs.</li>
+        <li>Detection small objects: raise imgsz (640 → 1024/1280) or tile (SAHI); add P2 (stride 4) head.</li>
+        <li>Train at the aspect ratio you deploy at (letterbox vs. stretch must match).</li></ul>` },
+    { id: 'imbalance', t: 'Class imbalance playbook', tags: 'class imbalance,long tail,resampling,focal loss,class weights',
+      h: T(['Imbalance', 'Try (in order)'], [
+        ['Mild (1:10)', 'Nothing; monitor macro-F1 / per-class AP'],
+        ['Moderate (1:100)', 'Class-balanced sampling (sqrt freq), weighted CE (class-balanced β=0.999), focal loss'],
+        ['Severe / long-tail (1:1000+)', 'Repeat-factor sampling (LVIS, t=0.001), logit adjustment \\(z_c-\\tau\\log\\pi_c\\), decoupled training (cRT), Seesaw/Equalization loss'],
+        ['Segmentation', 'Dice/Focal+CE combo, OHEM, crop sampling biased to rare classes'],
+        ['Threshold-based decisions', 'Tune per-class thresholds on val; calibrate']]) },
+    { id: 'smallobj', t: 'Small objects', tags: 'small object detection,sahi,tiling,p2 head,high resolution',
+      h: R`<ul><li>Higher input res or SAHI slicing (overlap 0.2) + merging (NMS/NMM).</li><li>Add stride-4 (P2) level; reduce min anchor / assign more positives (ATSS, TAL topk ↑).</li>
+        <li>Avoid strong downscale aug (mosaic scale range); use copy-paste of small instances.</li><li>Losses: NWD (normalized Wasserstein distance) instead of IoU for tiny boxes.</li></ul>` },
+    { id: 'search', t: 'Hyperparameter search methods', tags: 'hyperparameter search,optuna,bayesian optimization,asha,hyperband,random search',
+      h: T(['Method', 'When'], [
+        ['Manual, one-at-a-time (LR first)', 'Always the first pass; cheap intuition'],
+        ['Random search (log-uniform)', 'Beats grid when few params matter'],
+        ['Bayesian (TPE / Optuna, GP)', '≤ 10 params, expensive trials'],
+        ['ASHA / Hyperband (early stopping)', 'Many cheap-to-evaluate configs; Ray Tune'],
+        ['PBT (population-based)', 'Schedules (LR/aug) that evolve; RL, large clusters'],
+        ['Proxy tuning (μP)', 'Tune small width, transfer LR to large model']]),
+      code: R`
+import optuna
+def objective(trial):
+    lr = trial.suggest_float('lr', 1e-5, 3e-3, log=True)
+    wd = trial.suggest_float('wd', 1e-4, 0.3, log=True)
+    dp = trial.suggest_float('drop_path', 0.0, 0.3)
+    return train_and_eval(lr=lr, wd=wd, drop_path=dp, epochs=20)   # return val metric
+study = optuna.create_study(direction='maximize', pruner=optuna.pruners.HyperbandPruner())
+study.optimize(objective, n_trials=40)` }
+  ]},
+  { id: 'debug', title: 'Debugging & Troubleshooting', items: [
+    { id: 'checklist', t: 'Training sanity checklist', tags: 'debugging,sanity check,overfit one batch',
+      h: R`<ol><li>Visualize the data <b>after</b> augmentation with labels drawn (boxes, masks, keypoints). Most bugs are here.</li>
+        <li>Check initial loss: CE ≈ \(\ln K\); focal with prior 0.01 ≈ small.</li><li>Overfit one batch (≈ 0 loss in 100–300 steps, no aug). If not → model/loss bug.</li>
+        <li>Verify normalization mean/std and RGB vs BGR match the pretrained weights.</li><li>Confirm eval pipeline = train pipeline (resize, letterbox, normalization).</li>
+        <li>Log LR, grad-norm, loss components, and a few predictions every N steps.</li></ol>` },
+    { id: 'symptoms', t: 'Symptom → cause → fix', tags: 'nan loss,divergence,troubleshooting,loss not decreasing',
+      h: T(['Symptom', 'Likely cause', 'Fix'], [
+        ['Loss NaN/Inf', 'LR too high, fp16 overflow, log(0), bad boxes (w≤0)', 'warmup, bf16, clamp eps, validate labels, clip-norm'],
+        ['Loss plateaus immediately', 'LR too low/high, frozen params, wrong labels', 'LR range test; check requires_grad & optimizer param groups'],
+        ['Val metric ≪ train from epoch 1', 'train/eval preprocessing mismatch, BN in train mode, leakage', 'model.eval(); compare pipelines'],
+        ['Periodic loss spikes', 'bad samples, Adam β₂ too high, LR too high', 'β₂=0.95, lower LR, skip-batch on spikes'],
+        ['Good mAP50, poor mAP50-95', 'box localization weak', '↑ box loss weight, DFL/GIoU, higher res, longer training'],
+        ['Many duplicate detections', 'NMS IoU too high / one-to-many head', 'lower NMS IoU (0.5–0.6) or NMS-free (one-to-one) head'],
+        ['Great val, poor in production', 'domain shift (camera, light, compression)', 'collect prod data; photometric/JPEG aug; monitor drift'],
+        ['GPU underutilized', 'dataloader bottleneck', 'num_workers, pin_memory, persistent_workers, DALI, cache images, channels_last']]) }
+  ]},
+  { id: 'recipes', title: 'Ready-to-use Training Recipes', items: [
+    { id: 'r-cls', t: 'Recipe: fine-tune a classifier', tags: 'classification recipe,timm,fine-tune',
+      h: T(['Hyperparameter', 'Value'], [['Model', 'ConvNeXt-T / EfficientNetV2-S / ViT-B (DINOv2 or IN-21k weights)'], ['Optimizer', 'AdamW, LR 1e-4 (bs 64), WD 0.05'], ['Schedule', '5-ep warmup + cosine, 30–50 ep'], ['LLRD / drop-path', '0.75 (ViT) / 0.1'], ['Aug', 'RRC(0.35,1), flip, TrivialAugment, RandomErasing 0.25; mixup/cutmix if > 10k imgs'], ['Loss', 'CE + label smoothing 0.1'], ['Extras', 'EMA 0.9998, AMP bf16, image size 224→288 test']]),
+      code: R`
+# timm one-liner
+python train.py /data --model convnext_tiny.fb_in22k --pretrained --num-classes 10 \
+  --opt adamw --lr 1e-4 --weight-decay 0.05 --sched cosine --warmup-epochs 5 --epochs 50 \
+  --drop-path 0.1 --smoothing 0.1 --aa rand-m9-mstd0.5 --reprob 0.25 --mixup 0.2 --cutmix 0.5 \
+  --model-ema --amp -b 64` },
+    { id: 'r-yolo', t: 'Recipe: YOLO on a custom dataset', tags: 'yolo recipe,ultralytics,custom detection,hyp',
+      h: T(['hyp', 'Default', 'When to change'], [['lr0 / lrf', '0.01 / 0.01 (SGD)', 'AdamW: lr0 0.001–0.002'], ['momentum / wd', '0.937 / 5e-4', ''], ['warmup_epochs', '3', 'more for small batch'], ['box / cls / dfl gains', '7.5 / 0.5 / 1.5', '↑ box for localization-critical tasks; ↑ cls for many classes'], ['mosaic / close_mosaic', '1.0 / 10', 'off for tiny datasets with fixed layout'], ['mixup / copy_paste', '0 / 0', '0.1 / 0.1–0.3 for large models / seg'], ['hsv_h,s,v', '0.015, 0.7, 0.4', 'lower for color-critical classes'], ['fliplr / degrees', '0.5 / 0', 'flipud 0.5 + degrees for aerial'], ['imgsz', '640', '1024–1280 small objects'], ['epochs / patience', '100 / 100', '300 for from-scratch']]),
+      code: R`
+from ultralytics import YOLO
+model = YOLO('yolo26s.pt')            # pretrained COCO weights
+model.train(data='data.yaml', epochs=150, imgsz=640, batch=32, optimizer='auto',
+            cos_lr=True, close_mosaic=10, patience=50, amp=True)
+metrics = model.val(); model.export(format='onnx')   # or 'engine' for TensorRT` },
+    { id: 'r-detr', t: 'Recipe: DETR-family (RT-DETR / D-FINE / RF-DETR)', tags: 'detr recipe,rt-detr,rf-detr,fine-tune',
+      h: T(['Hyperparameter', 'Value'], [['Optimizer', 'AdamW, LR 1e-4 (head), 1e-5 backbone, WD 1e-4'], ['Batch', '16 (4 GPUs × 4)'], ['Schedule', '72 ep RT-DETR; fine-tune custom 30–100 ep, EMA 0.9999, warmup 2k iters'], ['Aug', 'photometric, zoom-out, IoU crop, flip, multi-scale 480–800; stop strong aug last few epochs (DEIM)'], ['Loss', 'VFL/focal cls + L1(5) + GIoU(2) (+FGL/DDF for D-FINE)'], ['Queries', '300 (increase for crowded scenes)'], ['Clip-norm', '0.1']]) },
+    { id: 'r-seg', t: 'Recipe: semantic segmentation', tags: 'segmentation recipe,mmsegmentation,segformer recipe',
+      h: T(['Hyperparameter', 'CNN (DeepLabv3+)', 'Transformer (SegFormer/Mask2Former)'], [['Optimizer', 'SGD 0.01, m 0.9, WD 5e-4', 'AdamW 6e-5 / 1e-4, WD 0.01/0.05, backbone ×0.1'], ['Schedule', 'poly 0.9, 80–160k it', 'poly/linear, 1.5k warmup, 160k it'], ['Crop', '512×512 (ADE), 512×1024 / 1024² (Cityscapes)', 'same'], ['Aug', 'random scale 0.5–2.0, crop, flip, photometric', 'same + LSJ for Mask2Former'], ['Loss', 'CE (+OHEM, aux 0.4)', 'CE / mask BCE+Dice (Mask2Former)'], ['Inference', 'sliding window, flip+MS TTA', 'same']]) },
+    { id: 'r-pose', t: 'Recipe: top-down pose', tags: 'pose recipe,mmpose,rtmpose recipe,hrnet recipe',
+      h: T(['Hyperparameter', 'Value'], [['Input', '256×192 (384×288 for accuracy)'], ['Optimizer', 'Adam 5e-4 (HRNet), AdamW 4e-3 + cosine (RTMPose)'], ['Schedule', '210 ep, drops at 170/200 (HRNet); 420 ep RTMPose'], ['Aug', 'half-body 0.3, scale ±35%, rotate ±40–80°, flip (swap L/R indices!), RandomErasing/Cutout'], ['Heatmap', 'Gaussian σ=2 (64×48), UDP encoding, flip-test at inference'], ['Detector', 'person AP ≈ 56 human detector; GT boxes for upper bound']]) },
+    { id: 'r-lora', t: 'Recipe: diffusion LoRA / DreamBooth', tags: 'lora recipe,dreambooth,diffusion fine-tune,sdxl,flux',
+      h: T(['Hyperparameter', 'Value'], [['Rank / alpha', 'r=16–64, α=r (style) ; r=4–16 (subject)'], ['LR', '1e-4 (LoRA, AdamW), 1e-6–5e-6 (full DreamBooth)'], ['Steps', '800–3000 (≈100 steps per training image)'], ['Batch', '1–4, grad-accum to 4'], ['Captions', 'unique token + class ("sks dog"), prior-preservation loss λ=1'], ['Resolution', 'native (1024 SDXL/FLUX), bucketing by aspect ratio'], ['Monitoring', 'fixed-seed sample grid every 200 steps; stop before overfit (texture copying)']]) }
+  ]}
+  ]
+});
+})();

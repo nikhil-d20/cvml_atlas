@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CV/ML Atlas</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<script defer src="vendor/katex/katex.min.js"></script>
+<script defer src="vendor/katex/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <button id="menuBtn" class="iconbtn menubtn" aria-label="Show sections" title="Sections">☰</button>
+  <a class="brand" href="#/home"><span class="logo">◎</span> CV/ML Atlas</a>
+  <div class="searchwrap">
+    <input id="q" type="search" autocomplete="off" placeholder="Search everything… e.g. focal loss, cosine schedule, ViT layers  ( / or Ctrl+K )">
+    <label class="scope"><input type="checkbox" id="scopeTab"> this tab only</label>
+    <div id="results" class="results hidden"></div>
+  </div>
+  <button id="themeBtn" class="iconbtn" title="Toggle theme">◐</button>
+</header>
+<nav id="tabs" class="tabs"></nav>
+<div class="layout">
+  <aside id="toc" class="toc"></aside>
+  <main id="main" class="main"></main>
+</div>
+
+<!-- content (order = tab order) -->
+<script>window.CV_CONTENT_VERSION = "202609290812";</script>
+<script src="js/core.js"></script>
+<script src="data/foundations.js"></script>
+<script src="data/training.js"></script>
+<script src="data/hparams.js"></script>
+<script src="data/classification.js"></script>
+<script src="data/detection.js"></script>
+<script src="data/segmentation.js"></script>
+<script src="data/pose.js"></script>
+<script src="data/genai.js"></script>
+<script src="data/vision_plus.js"></script>
+<script src="data/deploy.js"></script>
+<script src="data/benchmarks.js"></script>
+<script src="data/benchmarks_extra.js"></script>
+<script src="data/arch_det.js"></script>
+<script src="data/arch_seg.js"></script>
+<script src="data/arch_cls.js"></script>
+<script src="data/arch_pose.js"></script>
+<script src="data/arch_gen.js"></script>
+<script src="data/updates.js"></script>
+<script src="data/news_snapshot.js"></script>
+<script src="js/diagram.js"></script>
+<script src="js/news_client.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

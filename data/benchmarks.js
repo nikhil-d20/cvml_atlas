@@ -1,0 +1,242 @@
+// Leaderboards. Row: { n: name, d: 'YYYY-MM' release (paper/code), fam, m: metric, ...cols, notes, added? }
+// Numbers are as reported by authors / official repos on the stated benchmark split.
+(function () {
+const M = (n, d, fam, m, o) => Object.assign({ n, d, fam, m }, o || {});
+
+CV.board({
+  id: 'det-rt', task: 'det', title: 'Real-time detection · COCO', metric: 'AP', metricLabel: 'COCO val2017 box AP@[.5:.95]',
+  cols: [{ k: 'ap50', label: 'AP50' }, { k: 'ap75', label: 'AP75' }, { k: 'aps', label: 'APs' }, { k: 'apm', label: 'APm' }, { k: 'apl', label: 'APl' }, { k: 'params', label: 'Params (M)' }, { k: 'flops', label: 'GFLOPs' }, { k: 'lat', label: 'T4 TRT FP16 ms' }],
+  note: 'Latency = NVIDIA T4, TensorRT FP16, batch 1 as reported by each project (NMS-free models are end-to-end; NMS-based latencies may exclude NMS). "—" = not reported on T4.',
+  rows: [
+    M('YOLO26n', '2026-01', 'YOLO (Ultralytics)', 40.9, { params: 2.4, flops: 5.5, lat: 1.7, notes: 'NMS-free end-to-end, no DFL, MuSGD' }),
+    M('YOLO26s', '2026-01', 'YOLO (Ultralytics)', 48.6, { params: 9.5, flops: 20.9, lat: 2.5 }),
+    M('YOLO26m', '2026-01', 'YOLO (Ultralytics)', 53.1, { params: 20.4, flops: 68.4, lat: 4.7 }),
+    M('YOLO26l', '2026-01', 'YOLO (Ultralytics)', 55.0, { params: 24.8, flops: 86.8, lat: 6.2 }),
+    M('YOLO26x', '2026-01', 'YOLO (Ultralytics)', 57.5, { params: 55.7, flops: 194.4, lat: 11.8 }),
+    M('RF-DETR-N', '2025-07', 'DETR (DINOv2)', 48.4, { params: 30.5, lat: 2.3, notes: 'Apache-2.0; NAS-derived family' }),
+    M('RF-DETR-S', '2025-07', 'DETR (DINOv2)', 53.0, { params: 32.1, lat: 3.5 }),
+    M('RF-DETR-M', '2025-07', 'DETR (DINOv2)', 54.7, { params: 33.7, lat: 4.4 }),
+    M('RF-DETR-L', '2025-11', 'DETR (DINOv2)', 56.5, { params: 33.9, lat: 6.8 }),
+    M('RF-DETR-XL', '2025-11', 'DETR (DINOv2)', 58.6, { params: 126.4, lat: 11.5, notes: 'PML-1.0 license' }),
+    M('RF-DETR-2XL', '2025-11', 'DETR (DINOv2)', 60.1, { params: 126.9, lat: 17.2, notes: 'first real-time model > 60 AP (ICLR 2026)' }),
+    M('DEIMv2-Atto', '2025-09', 'DETR (DINOv3)', 23.8, { params: 0.5, flops: 0.8, lat: 1.1, notes: 'ultra-light' }),
+    M('DEIMv2-Pico', '2025-09', 'DETR (DINOv3)', 38.5, { params: 1.5, flops: 5.2, lat: 2.13 }),
+    M('DEIMv2-N', '2025-09', 'DETR (DINOv3)', 43.0, { params: 3.6, flops: 6.8, lat: 2.32 }),
+    M('DEIMv2-S', '2025-09', 'DETR (DINOv3)', 50.9, { params: 9.7, flops: 25.6, lat: 5.78 }),
+    M('DEIMv2-M', '2025-09', 'DETR (DINOv3)', 53.0, { params: 18.1, flops: 52.2, lat: 8.8 }),
+    M('DEIMv2-L', '2025-09', 'DETR (DINOv3)', 56.0, { params: 32.2, flops: 96.7, lat: 10.47 }),
+    M('DEIMv2-X', '2025-09', 'DETR (DINOv3)', 57.8, { params: 50.3, flops: 151.6, lat: 13.75 }),
+    M('YOLOv12-N', '2025-02', 'YOLO', 40.6, { params: 2.6, flops: 6.5, lat: 1.64, notes: 'area attention' }),
+    M('YOLOv12-S', '2025-02', 'YOLO', 48.0, { params: 9.3, flops: 21.4, lat: 2.61 }),
+    M('YOLOv12-M', '2025-02', 'YOLO', 52.5, { params: 20.2, flops: 67.5, lat: 4.86 }),
+    M('YOLOv12-L', '2025-02', 'YOLO', 53.7, { params: 26.4, flops: 88.9, lat: 6.77 }),
+    M('YOLOv12-X', '2025-02', 'YOLO', 55.2, { params: 59.1, flops: 199.0, lat: 11.79 }),
+    M('DEIM-D-FINE-N', '2024-12', 'DETR', 43.0, { params: 4, flops: 7, lat: 2.12 }),
+    M('DEIM-D-FINE-S', '2024-12', 'DETR', 49.0, { params: 10, flops: 25, lat: 3.49 }),
+    M('DEIM-D-FINE-M', '2024-12', 'DETR', 52.7, { params: 19, flops: 57, lat: 5.62 }),
+    M('DEIM-D-FINE-L', '2024-12', 'DETR', 54.7, { params: 31, flops: 91, lat: 8.07 }),
+    M('DEIM-D-FINE-X', '2024-12', 'DETR', 56.5, { params: 62, flops: 202, lat: 12.89 }),
+    M('D-FINE-S', '2024-10', 'DETR', 48.5, { params: 10, flops: 25, lat: 3.49, notes: 'COCO only (50.7 with Objects365)' }),
+    M('D-FINE-L', '2024-10', 'DETR', 54.0, { params: 31, flops: 91, lat: 8.07, notes: '57.3 with Objects365' }),
+    M('D-FINE-X', '2024-10', 'DETR', 55.8, { params: 62, flops: 202, lat: 12.89, notes: '59.3 with Objects365' }),
+    M('YOLO11n', '2024-09', 'YOLO (Ultralytics)', 39.5, { params: 2.6, flops: 6.5, lat: 1.5 }),
+    M('YOLO11s', '2024-09', 'YOLO (Ultralytics)', 47.0, { params: 9.4, flops: 21.5, lat: 2.5 }),
+    M('YOLO11m', '2024-09', 'YOLO (Ultralytics)', 51.5, { params: 20.1, flops: 68.0, lat: 4.7 }),
+    M('YOLO11l', '2024-09', 'YOLO (Ultralytics)', 53.4, { params: 25.3, flops: 86.9, lat: 6.2 }),
+    M('YOLO11x', '2024-09', 'YOLO (Ultralytics)', 54.7, { params: 56.9, flops: 194.9, lat: 11.3 }),
+    M('RT-DETRv2-S', '2024-07', 'DETR', 48.1, { params: 20, flops: 60, lat: 4.6 }),
+    M('RT-DETRv2-L', '2024-07', 'DETR', 53.4, { params: 42, flops: 136, lat: 9.3 }),
+    M('RT-DETRv2-X', '2024-07', 'DETR', 54.3, { params: 76, flops: 259, lat: 13.5 }),
+    M('YOLOv10-N', '2024-05', 'YOLO', 38.5, { params: 2.3, flops: 6.7, lat: 1.84, notes: 'NMS-free dual assignment' }),
+    M('YOLOv10-S', '2024-05', 'YOLO', 46.3, { params: 7.2, flops: 21.6, lat: 2.49 }),
+    M('YOLOv10-M', '2024-05', 'YOLO', 51.1, { params: 15.4, flops: 59.1, lat: 4.74 }),
+    M('YOLOv10-L', '2024-05', 'YOLO', 53.2, { params: 24.4, flops: 120.3, lat: 7.28 }),
+    M('YOLOv10-X', '2024-05', 'YOLO', 54.4, { params: 29.5, flops: 160.4, lat: 10.7 }),
+    M('YOLOv9-S', '2024-02', 'YOLO', 46.8, { params: 7.1, flops: 26.4, notes: 'GELAN + PGI' }),
+    M('YOLOv9-C', '2024-02', 'YOLO', 53.0, { params: 25.3, flops: 102.1 }),
+    M('YOLOv9-E', '2024-02', 'YOLO', 55.6, { params: 57.3, flops: 189.0 }),
+    M('RT-DETR-R18', '2023-04', 'DETR', 46.5, { params: 20, flops: 60, lat: 4.6, notes: 'first real-time DETR' }),
+    M('RT-DETR-R50', '2023-04', 'DETR', 53.1, { params: 42, flops: 136, lat: 9.3 }),
+    M('RT-DETR-R101', '2023-04', 'DETR', 54.3, { params: 76, flops: 259, lat: 13.5 }),
+    M('YOLOv8n', '2023-01', 'YOLO (Ultralytics)', 37.3, { params: 3.2, flops: 8.7 }),
+    M('YOLOv8s', '2023-01', 'YOLO (Ultralytics)', 44.9, { params: 11.2, flops: 28.6 }),
+    M('YOLOv8m', '2023-01', 'YOLO (Ultralytics)', 50.2, { params: 25.9, flops: 78.9 }),
+    M('YOLOv8l', '2023-01', 'YOLO (Ultralytics)', 52.9, { params: 43.7, flops: 165.2 }),
+    M('YOLOv8x', '2023-01', 'YOLO (Ultralytics)', 53.9, { params: 68.2, flops: 257.8 }),
+    M('RTMDet-s', '2022-12', 'CNN one-stage', 44.6, { params: 9.0, flops: 14.8 }),
+    M('RTMDet-l', '2022-12', 'CNN one-stage', 51.5, { params: 52.3, flops: 80.2 }),
+    M('RTMDet-x', '2022-12', 'CNN one-stage', 52.8, { params: 94.9, flops: 141.7 }),
+    M('YOLOX-S', '2021-07', 'YOLO', 40.5, { params: 9.0, flops: 26.8, notes: 'anchor-free, SimOTA' }),
+    M('YOLOX-X', '2021-07', 'YOLO', 51.1, { params: 99.1, flops: 281.9 }),
+    M('YOLOv5s', '2020-06', 'YOLO (Ultralytics)', 37.4, { params: 7.2, flops: 16.5 }),
+    M('YOLOv5x', '2020-06', 'YOLO (Ultralytics)', 50.7, { params: 86.7, flops: 205.7 })
+  ]
+});
+
+CV.board({
+  id: 'det-coco', task: 'det', title: 'High-accuracy detection · COCO', metric: 'AP', metricLabel: 'COCO box AP (val2017 unless noted)',
+  cols: [{ k: 'ap50', label: 'AP50' }, { k: 'ap75', label: 'AP75' }, { k: 'aps', label: 'APs' }, { k: 'apm', label: 'APm' }, { k: 'apl', label: 'APl' }, { k: 'params', label: 'Params (M)' }, { k: 'flops', label: 'GFLOPs' }, { k: 'ep', label: 'Epochs' }],
+  note: 'Top entries use extra pre-training data (Objects365, IN-22k) and sometimes test-time augmentation — read the notes before comparing.',
+  rows: [
+    M('Co-DETR (ViT-L)', '2022-11', 'DETR hybrid', 66.0, { params: 304, notes: 'Objects365 pre-train; collaborative hybrid assignments; test-dev' }),
+    M('InternImage-H + DINO', '2022-11', 'DCNv3 CNN', 65.4, { params: 2180, notes: 'Objects365 pre-train; test-dev' }),
+    M('DINO (Swin-L)', '2022-03', 'DETR', 63.2, { params: 218, notes: 'Objects365 pre-train, 5-scale' }),
+    M('RF-DETR-2XL', '2025-11', 'DETR (DINOv2)', 60.1, { params: 126.9, notes: 'real-time (17 ms T4)' }),
+    M('ViTDet-H (Cascade)', '2022-03', 'Plain ViT', 58.7, { params: 692, notes: 'MAE IN-1k pre-train, 100 ep' }),
+    M('Swin-L HTC++', '2021-03', 'Two-stage', 58.0, { params: 284, notes: 'IN-22k, multi-scale test' }),
+    M('YOLO26x', '2026-01', 'YOLO (Ultralytics)', 57.5, { params: 55.7, flops: 194.4, notes: 'real-time (11.8 ms T4)' }),
+    M('Grounding DINO (Swin-L)', '2023-03', 'Open-vocab', 52.5, { params: 341, notes: 'ZERO-SHOT: no COCO training (63.0 fine-tuned)' }),
+    M('DINO-4scale (R50, 36ep)', '2022-03', 'DETR', 50.9, { params: 47, flops: 279, ep: 36 }),
+    M('DINO-4scale (R50, 12ep)', '2022-03', 'DETR', 49.0, { params: 47, flops: 279, ep: 12 }),
+    M('Deformable DETR (two-stage)', '2020-10', 'DETR', 46.2, { params: 40, flops: 173, ep: 50 }),
+    M('Cascade Mask R-CNN (R50, 3×)', '2017-12', 'Two-stage', 44.3, { ep: 36, notes: 'detectron2' }),
+    M('DETR (R101)', '2020-05', 'DETR', 43.5, { params: 60, flops: 152, ep: 500 }),
+    M('DETR (R50)', '2020-05', 'DETR', 42.0, { params: 41, flops: 86, ep: 500 }),
+    M('Mask R-CNN (R50-FPN, 3×)', '2017-03', 'Two-stage', 41.0, { params: 44, ep: 36, notes: 'detectron2 box AP' }),
+    M('Faster R-CNN (R50-FPN, 3×)', '2015-06', 'Two-stage', 40.2, { params: 42, flops: 180, ep: 36, notes: 'detectron2' }),
+    M('RetinaNet (R50-FPN, 3×)', '2017-08', 'One-stage', 38.7, { params: 38, ep: 36, notes: 'detectron2' })
+  ]
+});
+
+CV.board({
+  id: 'cls-in1k', task: 'cls', title: 'Image classification · ImageNet-1k', metric: 'Top-1', metricLabel: 'ImageNet-1k val top-1 accuracy (%)',
+  cols: [{ k: 'top5', label: 'Top-5' }, { k: 'params', label: 'Params (M)' }, { k: 'flops', label: 'GFLOPs' }, { k: 'res', label: 'Test res' }],
+  note: 'Pre-training data differs (IN-1k only / IN-22k / JFT / web-scale) — shown in notes. For fair backbone comparisons compare rows with the same data regime.',
+  rows: [
+    M('DINOv3 ViT-7B (linear probe)', '2025-08', 'SSL foundation', 88.4, { params: 6700, notes: 'frozen features + linear head; LVD-1689M' }),
+    M('MobileNetV4-Hybrid-L', '2024-04', 'Mobile', 83.4, { params: 31, flops: 7.2, res: 384, notes: 'IN-1k' }),
+    M('MobileNetV4-Conv-M', '2024-04', 'Mobile', 79.9, { params: 9.2, flops: 1.0, res: 256, notes: 'IN-1k' }),
+    M('VMamba-T', '2024-01', 'SSM', 82.6, { params: 30, flops: 4.9, res: 224, notes: 'IN-1k' }),
+    M('DINOv2 ViT-g/14 (linear probe)', '2023-04', 'SSL foundation', 86.5, { params: 1100, notes: 'frozen; LVD-142M' }),
+    M('EVA-02-L', '2023-03', 'ViT (MIM)', 90.0, { params: 304, res: 448, notes: 'Merged-38M + IN-22k' }),
+    M('ConvNeXt V2-H', '2023-01', 'ConvNet', 88.9, { params: 660, flops: 338, res: 512, notes: 'FCMAE + IN-22k' }),
+    M('InternImage-H', '2022-11', 'DCNv3 CNN', 89.6, { params: 1080, flops: 1478, res: 640, notes: 'large joint pre-training' }),
+    M('BEiT-3', '2022-08', 'Multimodal ViT', 89.6, { params: 1900, notes: 'multimodal pre-training' }),
+    M('ConvNeXt-XL', '2022-01', 'ConvNet', 87.8, { params: 350, flops: 179, res: 384, notes: 'IN-22k' }),
+    M('ConvNeXt-B', '2022-01', 'ConvNet', 83.8, { params: 89, flops: 15.4, res: 224, notes: 'IN-1k' }),
+    M('ConvNeXt-T', '2022-01', 'ConvNet', 82.1, { params: 28, flops: 4.5, res: 224, notes: 'IN-1k' }),
+    M('ResNet-50 (RSB A1)', '2021-10', 'ConvNet', 80.4, { params: 25.6, flops: 4.1, res: 224, notes: 'modern recipe, IN-1k' }),
+    M('CoAtNet-7', '2021-06', 'Hybrid', 90.9, { params: 2440, flops: 2586, res: 512, notes: 'JFT-3B' }),
+    M('ViT-G/14', '2021-06', 'ViT', 90.5, { params: 1843, flops: 965, res: 518, notes: 'JFT-3B' }),
+    M('EfficientNetV2-L', '2021-04', 'ConvNet', 85.7, { params: 120, flops: 53, res: 480, notes: 'IN-1k' }),
+    M('EfficientNetV2-S', '2021-04', 'ConvNet', 83.9, { params: 22, flops: 8.8, res: 384, notes: 'IN-1k' }),
+    M('Swin-L', '2021-03', 'Hierarchical ViT', 87.3, { params: 197, flops: 103.9, res: 384, notes: 'IN-22k' }),
+    M('Swin-B', '2021-03', 'Hierarchical ViT', 83.5, { params: 88, flops: 15.4, res: 224, notes: 'IN-1k' }),
+    M('Swin-T', '2021-03', 'Hierarchical ViT', 81.3, { params: 28, flops: 4.5, res: 224, notes: 'IN-1k' }),
+    M('DeiT-B', '2020-12', 'ViT', 81.8, { params: 86, flops: 17.6, res: 224, notes: 'IN-1k only' }),
+    M('DeiT-S', '2020-12', 'ViT', 79.8, { params: 22, flops: 4.6, res: 224, notes: 'IN-1k only' }),
+    M('ViT-B/16', '2020-10', 'ViT', 84.0, { params: 86, flops: 55.5, res: 384, notes: 'IN-21k pre-train' }),
+    M('EfficientNet-B7', '2019-05', 'ConvNet', 84.3, { params: 66, flops: 37, res: 600, notes: 'IN-1k' }),
+    M('EfficientNet-B0', '2019-05', 'ConvNet', 77.1, { params: 5.3, flops: 0.39, res: 224, notes: 'IN-1k' }),
+    M('MobileNetV3-L', '2019-05', 'Mobile', 75.2, { params: 5.4, flops: 0.22, res: 224 }),
+    M('MobileNetV2', '2018-01', 'Mobile', 72.0, { params: 3.4, flops: 0.3, res: 224 }),
+    M('DenseNet-121', '2016-08', 'ConvNet', 74.4, { params: 8.0, flops: 2.9, res: 224 }),
+    M('ResNet-152', '2015-12', 'ConvNet', 78.3, { params: 60.2, flops: 11.6, res: 224, notes: 'torchvision v1 weights' }),
+    M('ResNet-50', '2015-12', 'ConvNet', 76.1, { params: 25.6, flops: 4.1, res: 224, notes: 'torchvision v1 weights' }),
+    M('VGG-16', '2014-09', 'ConvNet', 71.6, { params: 138, flops: 15.5, res: 224 }),
+    M('AlexNet', '2012-09', 'ConvNet', 56.5, { params: 61, flops: 0.7, res: 224 })
+  ]
+});
+
+CV.board({
+  id: 'seg-ade', task: 'seg', title: 'Semantic segmentation · ADE20K', metric: 'mIoU', metricLabel: 'ADE20K val mIoU (ms = multi-scale test)',
+  cols: [{ k: 'params', label: 'Params (M)' }, { k: 'flops', label: 'GFLOPs' }],
+  rows: [
+    M('DINOv3 7B + Mask2Former', '2025-08', 'SSL foundation', 63.0, { params: 6700, notes: 'frozen backbone (reported)' }),
+    M('ONE-PEACE', '2023-05', 'Multimodal', 63.0, { params: 1500, notes: 'ms' }),
+    M('DINOv2 ViT-g + Mask2Former', '2023-04', 'SSL foundation', 60.2, { params: 1100, notes: 'ViT-Adapter, ms' }),
+    M('InternImage-H + Mask2Former', '2022-11', 'DCNv3 CNN', 62.9, { params: 1310, notes: 'ms, extra pre-training' }),
+    M('BEiT-3 + ViT-Adapter', '2022-08', 'Multimodal ViT', 62.8, { params: 1900, notes: 'ms' }),
+    M('OneFormer (DiNAT-L)', '2022-11', 'Universal', 58.3, { params: 223, notes: 'ms, IN-22k' }),
+    M('Mask2Former (Swin-L)', '2021-12', 'Universal', 57.3, { params: 216, notes: 'ms (56.1 ss), IN-22k' }),
+    M('MaskFormer (Swin-L)', '2021-07', 'Universal', 55.6, { params: 212, notes: 'ms' }),
+    M('ConvNeXt-XL + UperNet', '2022-01', 'ConvNet', 54.0, { params: 391, flops: 3335, notes: 'ms, IN-22k' }),
+    M('Swin-L + UperNet', '2021-03', 'Hierarchical ViT', 53.5, { params: 234, flops: 3230, notes: 'ms, IN-22k' }),
+    M('SegNeXt-L', '2022-09', 'Conv attention', 51.0, { params: 48.9, flops: 70, notes: 'ss' }),
+    M('SegFormer-B5', '2021-05', 'Transformer', 51.0, { params: 84.7, flops: 183.3, notes: 'ss (51.8 ms)' }),
+    M('SegFormer-B2', '2021-05', 'Transformer', 46.5, { params: 27.5, flops: 62.4, notes: 'ss' }),
+    M('SegFormer-B0', '2021-05', 'Transformer', 37.4, { params: 3.8, flops: 8.4, notes: 'ss' }),
+    M('DeepLabV3+ (R101)', '2018-02', 'CNN', 45.5, { params: 63, notes: 'mmseg, 160k' }),
+    M('PSPNet (R101)', '2016-12', 'CNN', 43.3, { params: 68, notes: 'ss' })
+  ]
+});
+
+CV.board({
+  id: 'seg-cocoinst', task: 'seg', title: 'Instance segmentation · COCO', metric: 'Mask AP', metricLabel: 'COCO val2017 mask AP@[.5:.95]',
+  cols: [{ k: 'mask50', label: 'Mask AP50' }, { k: 'mask75', label: 'Mask AP75' }, { k: 'aps', label: 'APs' }, { k: 'apm', label: 'APm' }, { k: 'apl', label: 'APl' }, { k: 'params', label: 'Params (M)' }, { k: 'flops', label: 'GFLOPs' }, { k: 'lat', label: 'T4 TRT ms' }],
+  rows: [
+    M('YOLO26n-seg', '2026-01', 'YOLO (Ultralytics)', 33.9, { params: 2.7, flops: 9.3, lat: 2.1, notes: 'box AP 39.6' }),
+    M('YOLO26s-seg', '2026-01', 'YOLO (Ultralytics)', 40.0, { params: 10.4, flops: 34.5, lat: 3.3 }),
+    M('YOLO26m-seg', '2026-01', 'YOLO (Ultralytics)', 44.1, { params: 23.6, flops: 121.7, lat: 6.7 }),
+    M('YOLO26l-seg', '2026-01', 'YOLO (Ultralytics)', 45.5, { params: 28.0, flops: 140.1, lat: 8.0 }),
+    M('YOLO26x-seg', '2026-01', 'YOLO (Ultralytics)', 47.0, { params: 62.8, flops: 314.0, lat: 16.4 }),
+    M('RF-DETR-Seg-N', '2025-10', 'DETR (DINOv2)', 40.3, { params: 33.6, lat: 3.4 }),
+    M('RF-DETR-Seg-S', '2025-10', 'DETR (DINOv2)', 43.1, { params: 33.7, lat: 4.4 }),
+    M('RF-DETR-Seg-M', '2025-10', 'DETR (DINOv2)', 45.3, { params: 35.7, lat: 5.9 }),
+    M('RF-DETR-Seg-L', '2025-10', 'DETR (DINOv2)', 47.1, { params: 36.2, lat: 8.8 }),
+    M('RF-DETR-Seg-XL', '2025-10', 'DETR (DINOv2)', 48.8, { params: 38.1, lat: 13.5 }),
+    M('RF-DETR-Seg-2XL', '2025-10', 'DETR (DINOv2)', 49.9, { params: 38.6, lat: 21.8 }),
+    M('YOLO11n-seg', '2024-09', 'YOLO (Ultralytics)', 32.0, { params: 2.9, flops: 10.4, lat: 1.8 }),
+    M('YOLO11m-seg', '2024-09', 'YOLO (Ultralytics)', 41.5, { params: 22.4, flops: 123.3, lat: 6.3 }),
+    M('YOLO11x-seg', '2024-09', 'YOLO (Ultralytics)', 43.8, { params: 62.1, flops: 319.0, lat: 15.8 }),
+    M('YOLOv8n-seg', '2023-01', 'YOLO (Ultralytics)', 30.5, { params: 3.4, flops: 12.6 }),
+    M('YOLOv8x-seg', '2023-01', 'YOLO (Ultralytics)', 43.4, { params: 71.8, flops: 344.1 }),
+    M('ViTDet-H (Cascade)', '2022-03', 'Plain ViT', 50.9, { params: 692, notes: 'MAE pre-train' }),
+    M('Mask2Former (Swin-L)', '2021-12', 'Universal', 50.1, { params: 216, notes: 'IN-22k, 100 ep' }),
+    M('Mask2Former (R50)', '2021-12', 'Universal', 43.7, { params: 44, notes: '50 ep' }),
+    M('Mask R-CNN (R50-FPN, 3×)', '2017-03', 'Two-stage', 37.2, { params: 44, notes: 'detectron2' })
+  ]
+});
+
+CV.board({
+  id: 'pose-coco', task: 'pose', title: 'Human pose · COCO keypoints', metric: 'AP', metricLabel: 'COCO val2017 keypoint AP (OKS)',
+  cols: [{ k: 'ap50', label: 'AP50' }, { k: 'ap75', label: 'AP75' }, { k: 'ar', label: 'AR' }, { k: 'params', label: 'Params (M)' }, { k: 'flops', label: 'GFLOPs' }, { k: 'lat', label: 'T4 TRT ms' }],
+  note: 'Top-down numbers use a person detector (≈56 AP) and 256×192 input unless noted; one-stage models (YOLO-pose, RTMO) are end-to-end multi-person.',
+  rows: [
+    M('YOLO26n-pose', '2026-01', 'One-stage (YOLO)', 57.2, { params: 2.9, flops: 7.6, lat: 1.8 }),
+    M('YOLO26s-pose', '2026-01', 'One-stage (YOLO)', 63.0, { params: 10.4, flops: 24.1, lat: 2.7 }),
+    M('YOLO26m-pose', '2026-01', 'One-stage (YOLO)', 68.8, { params: 21.5, flops: 73.3, lat: 5.0 }),
+    M('YOLO26l-pose', '2026-01', 'One-stage (YOLO)', 70.4, { params: 25.9, flops: 91.7, lat: 6.5 }),
+    M('YOLO26x-pose', '2026-01', 'One-stage (YOLO)', 71.6, { params: 57.6, flops: 202.3, lat: 12.2 }),
+    M('YOLO11n-pose', '2024-09', 'One-stage (YOLO)', 50.0, { params: 2.9, flops: 7.6 }),
+    M('YOLO11x-pose', '2024-09', 'One-stage (YOLO)', 69.5, { params: 58.8, flops: 203.3 }),
+    M('RTMO-l', '2023-12', 'One-stage', 72.4, { params: 44.8, notes: 'coordinate classification' }),
+    M('RTMO-s', '2023-12', 'One-stage', 67.7, { params: 9.9 }),
+    M('RTMPose-l', '2023-03', 'Top-down SimCC', 76.5, { params: 27.7, flops: 4.16, notes: 'COCO+AIC training' }),
+    M('RTMPose-m', '2023-03', 'Top-down SimCC', 75.8, { params: 13.6, flops: 1.93, notes: '>90 FPS CPU' }),
+    M('RTMPose-t', '2023-03', 'Top-down SimCC', 68.5, { params: 3.3, flops: 0.36 }),
+    M('YOLOv8x-pose', '2023-01', 'One-stage (YOLO)', 69.2, { params: 69.4, flops: 263.2 }),
+    M('ViTPose-G', '2022-04', 'Top-down ViT', 80.9, { params: 1000, notes: 'test-dev, multi-dataset, 576×432' }),
+    M('ViTPose-H', '2022-04', 'Top-down ViT', 79.1, { params: 632, flops: 141.8 }),
+    M('ViTPose-L', '2022-04', 'Top-down ViT', 78.3, { params: 307, flops: 70.1 }),
+    M('ViTPose-B', '2022-04', 'Top-down ViT', 75.8, { params: 86, flops: 17.1 }),
+    M('HigherHRNet-W32', '2019-08', 'Bottom-up', 67.1, { params: 28.6, notes: '512 input' }),
+    M('HRNet-W48 (384×288)', '2019-02', 'Top-down heatmap', 76.3, { params: 63.6, flops: 32.9 }),
+    M('HRNet-W32', '2019-02', 'Top-down heatmap', 74.4, { params: 28.5, flops: 7.1 }),
+    M('SimpleBaseline R152 (384×288)', '2018-04', 'Top-down heatmap', 74.3, { params: 68.6, flops: 35.6 }),
+    M('SimpleBaseline R50', '2018-04', 'Top-down heatmap', 70.4, { params: 34.0, flops: 8.9 }),
+    M('OpenPose', '2016-11', 'Bottom-up', 61.8, { notes: 'test-dev, PAFs' })
+  ]
+});
+
+CV.board({
+  id: 'gen-in256', task: 'gen', title: 'Image generation · ImageNet 256', metric: 'FID', metricLabel: 'ImageNet 256×256 class-conditional FID-50k (lower is better)', lower: true,
+  cols: [{ k: 'params', label: 'Params (M)' }, { k: 'nfe', label: 'Sampling steps' }],
+  note: 'With classifier-free guidance unless noted. FID depends on the evaluation code; compare within the same suite (ADM evaluator).',
+  rows: [
+    M('RAE (DiT-DH-XL)', '2025-10', 'Diffusion (repr. autoencoder)', 1.13, { params: 839, notes: 'DINOv2 encoder as latent space (reported)' }),
+    M('LightningDiT (VA-VAE)', '2025-01', 'Diffusion', 1.35, { params: 675, nfe: 250 }),
+    M('REPA (SiT-XL/2)', '2024-10', 'Flow/diffusion', 1.42, { params: 675, nfe: 250, notes: 'DINOv2 representation alignment' }),
+    M('MAR-H', '2024-06', 'Masked AR + diffusion head', 1.55, { params: 943, nfe: 256 }),
+    M('LlamaGen-3B', '2024-06', 'Autoregressive', 2.18, { params: 3100, nfe: 576 }),
+    M('VAR-d30', '2024-04', 'Next-scale AR', 1.92, { params: 2000, nfe: 10 }),
+    M('SiT-XL/2', '2024-01', 'Flow matching', 2.06, { params: 675, nfe: 250 }),
+    M('MDTv2-XL/2', '2023-03', 'Diffusion', 1.58, { params: 676, nfe: 250 }),
+    M('DiT-XL/2', '2022-12', 'Diffusion transformer', 2.27, { params: 675, nfe: 250 }),
+    M('StyleGAN-XL', '2022-02', 'GAN', 2.30, { params: 166, nfe: 1 }),
+    M('LDM-4-G', '2021-12', 'Latent diffusion', 3.60, { params: 400, nfe: 250 }),
+    M('ADM-G', '2021-05', 'Pixel diffusion', 4.59, { params: 554, nfe: 250, notes: 'classifier guidance' }),
+    M('BigGAN-deep', '2018-09', 'GAN', 6.95, { params: 160, nfe: 1 })
+  ]
+});
+})();
