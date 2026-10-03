@@ -135,6 +135,34 @@ CV.arch({ id: 'internimage', name: 'InternImage', task: 'cls', match: /^InternIm
   pipeline: [IMG(), P('backbone', 'DCNv3 stages'), P('head', 'Task head'), P('output', 'Prediction')],
   f: [R`y(p_0)=\sum_{g=1}^{G}\sum_{k=1}^{K}w_g\,m_{gk}\,x_g(p_0+p_k+\Delta p_{gk}),\;\;\textstyle\sum_k m_{gk}=1`] });
 
+// Steganalysis (binary cover-vs-stego image classification)
+CV.arch({
+  id: 'hsmnet', name: 'HSMNet (steganalysis)', aka: 'hsm net hsmnet hsm-net steganalysis', task: 'cls', match: /^HSMNet/i, date: '2025', org: 'Information Sciences (Elsevier), 2025',
+  paper: 'https://www.sciencedirect.com/science/article/abs/pii/S0020025525009600', tags: 'hsmnet,steganalysis,hybrid dilated convolution,squeeze-excitation,se attention,multi-resolution,cover source mismatch,stego detection,binary classification',
+  tagline: 'Multi-resolution grayscale image steganalysis network. It decides whether an image is a clean cover or a stego image hiding a message, and it works across image resolutions. Two branches, local (vanilla conv) and global (hybrid dilated conv), use squeeze-and-excitation channel attention and are fused hierarchically.',
+  anatomy: {
+    backbone: 'Preprocessing module with a hybrid dilated convolution block that enlarges the receptive field, plus SE channel attention; then a two-branch feature extractor. One branch uses vanilla convolutions for local (fine texture / noise-residual) features; the other uses hybrid dilated convolutions for global features of multi-resolution images.',
+    neck: 'Hierarchical fusion strategy that combines the local and global branch features; SE blocks in the preprocessing and feature-extraction stages re-weight channels toward texture-rich regions, where adaptive steganography embeds most of the payload.',
+    head: 'Classification module: global pooling over the fused features → fully-connected layers → 2 classes (cover / stego). Global pooling is what lets one network accept images of different resolutions.',
+    loss: 'Binary classification (cover vs stego), evaluated by detection accuracy / error rate per steganographic algorithm and payload.'
+  },
+  pipeline: [
+    { k: 'input', t: 'Grayscale image', d: 'any resolution (multi-resolution), cover or stego' },
+    { k: 'backbone', t: 'Preprocessing module', d: 'per the paper', b: ['Hybrid dilated convolution block (larger receptive field)', 'SE channel attention'] },
+    { k: 'backbone', t: 'Two-branch feature extraction', b: ['Local branch: vanilla convolutions → local features', 'Global branch: hybrid dilated convolutions → global features', 'SE blocks in both stages'] },
+    { k: 'neck', t: 'Hierarchical fusion', d: 'combine local + global representations' },
+    { k: 'head', t: 'Classifier', b: ['Global pooling (resolution independent)', 'FC layers → 2 logits', 'cover / stego'] },
+    { k: 'output', t: 'Decision', d: 'P(stego)' }],
+  blocks: [
+    { t: 'Hybrid dilated convolution (concept)', k: 'backbone', ops: ['3×3 conv, dilation r₁ (e.g. 1)', '3×3 conv, dilation r₂ (e.g. 2)', '3×3 conv, dilation r₃ (e.g. 5)', 'Receptive field grows fast, no gridding holes'], note: 'Rates are chosen without a common factor (e.g. 1-2-5) so that stacked dilated kernels cover every pixel. The illustrative rates are the standard HDC choice; the paper\'s exact rates are in the full text.' },
+    { t: 'Squeeze-and-Excitation block', k: 'backbone', ops: ['Feature map C×H×W', 'Global average pool → C', 'FC (C/r) → ReLU → FC (C) → sigmoid', 'Scale channels of the input'], skips: [[0, 3, 'x']] }],
+  f: [R`\text{HDC receptive field: } r_{eff}=1+\sum_i (k-1)\,d_i\;\;(k=3,\;d=1,2,5\Rightarrow 17)`, R`\text{SE: } s=\sigma\big(W_2\,\delta(W_1\,\mathrm{GAP}(x))\big),\;\;y=s\odot x`, R`P_E=\min_{P_{FA}}\tfrac12\big(P_{FA}+P_{MD}\big)\;\;(\text{steganalysis detection error})`],
+  sections: [
+    { h: 'What problem it solves', html: '<p>Most CNN steganalyzers (Xu-Net, Ye-Net, Yedroudj-Net, SRNet, Zhu-Net) are trained and tested on fixed-size images, typically 256×256 or 512×512 from BOSSbase. Real images come at many resolutions, which causes <b>cover-source mismatch</b> and an accuracy drop. HSMNet targets <b>multi-resolution</b> grayscale steganalysis: the global dilated branch captures image-wide statistics, and the local branch keeps the fine noise-residual cues that embedding leaves behind.</p>' },
+    { h: 'Evaluation (as reported)', html: '<p>The authors evaluate on <b>BOSSbase</b> and <b>ALASKA #2</b> and report better detection than current multi-resolution steganalysis methods. Per-algorithm accuracy tables, payloads and the exact layer configuration are in the full paper (paywalled), so they are not reproduced here. This app only lists numbers read from an official source.</p>' },
+    { h: 'Practical notes for training steganalyzers', html: '<ul><li><b>Never resize or JPEG-recompress</b> the inputs; interpolation destroys the embedding signal. Use crops or resolution-agnostic pooling instead, which is the point of HSMNet\'s design.</li><li>Train cover and its matching stego image in the <b>same mini-batch</b> (pair constraint); this is standard practice and speeds convergence.</li><li>Augment only with label-preserving, signal-preserving ops: flips and 90° rotations. Avoid color or blur augmentation.</li><li>Curriculum on payload: start at a high payload (e.g. 0.4 bpp), then fine-tune to lower payloads (0.2, 0.1 bpp).</li><li>Report detection error P<sub>E</sub> or accuracy per embedding algorithm (WOW, S-UNIWARD, HILL, …) and per payload. One averaged number hides the hard cases.</li></ul>' }]
+});
+
 // Efficient backbones compared in the Next-ViT tables
 CV.arch({ id: 'pvtv2', name: 'PVT v2', task: 'cls', match: /^PVTv2/, date: '2021-06', org: 'Nanjing Univ. / HKU', paper: 'https://arxiv.org/abs/2106.13797', tags: 'pvt,pyramid vision transformer,spatial reduction attention',
   tagline: 'Pyramid Vision Transformer: four-stage hierarchical ViT with spatial-reduction attention; v2 adds overlapping patch embedding, conv FFN and linear SRA.',

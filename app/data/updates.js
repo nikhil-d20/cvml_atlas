@@ -48,3 +48,26 @@ CV.update({
     ['map', 'sam'].map(id => ({ tab: 'fewshot', section: 'fsseg', item: { id } })),
     ['aug', 'semi', 'recipe'].map(id => ({ tab: 'fewshot', section: 'data', item: { id } })))
 });
+
+CV.update({
+  date: '2026-10-03',
+  changelog: [{ text: 'Added HSMNet (multi-resolution steganalysis classifier, 2025) to Classification and the Model Zoo, plus a card on steganalysis classifiers.', link: 'https://www.sciencedirect.com/science/article/abs/pii/S0020025525009600' }],
+  items: [{
+    tab: 'cls', section: 'arch', item: {
+      id: 'steganalysis', t: 'Steganalysis classifiers (HSMNet, SRNet, Yedroudj-Net, …)',
+      tags: 'hsmnet,hsm net,steganalysis,stego detection,srnet,yedroudj-net,zhu-net,xu-net,ye-net,cover stego,binary classification,srm filters,hybrid dilated convolution',
+      s: 'Binary classifiers that decide whether an image hides a secret message (cover vs stego). The signal is a tiny noise residual, so the architecture rules are almost the opposite of ImageNet classifiers.',
+      f: [String.raw`P_E=\min_{P_{FA}}\tfrac12\big(P_{FA}+P_{MD}\big)`],
+      h: CV.tbl(['Model', 'Year', 'Key idea'], [
+        ['Xu-Net', '2016', 'fixed high-pass filter preprocessing, absolute-value layer, TanH, BN'],
+        ['Ye-Net', '2017', '30 SRM high-pass filters as first layer + truncated linear unit (TLU)'],
+        ['Yedroudj-Net', '2018', 'SRM filters + TLU + BN, compact and strong baseline'],
+        ['SRNet', '2018', 'learns its own preprocessing; no pooling in the first 7 layers; residual blocks — widely used reference'],
+        ['Zhu-Net', '2019', 'separable convolutions + spatial pyramid pooling for arbitrary input sizes'],
+        ['<a href="#/arch/hsmnet">HSMNet</a>', '2025', 'multi-resolution: vanilla-conv local branch + hybrid-dilated-conv global branch, SE attention, hierarchical fusion']]) +
+        String.raw`<p><b>Design rules (vs ImageNet nets):</b> suppress image content and amplify noise residuals (high-pass / SRM filters or learned equivalents); avoid early pooling or strided downsampling that averages away the signal; never resize the input; use global pooling at the end so inputs of any size work. Benchmarks: BOSSbase / BOWS2 (spatial domain) and ALASKA #2; algorithms: WOW, S-UNIWARD, HILL, MiPOD; payloads in bits per pixel (bpp).</p>`,
+      tip: 'Treat it like a fine-grained binary classifier with a pair constraint: put each cover and its stego version in the same batch. Use only flips and 90° rotations as augmentation, and report error per embedding algorithm and payload.',
+      src: 'https://www.sciencedirect.com/science/article/abs/pii/S0020025525009600'
+    }
+  }]
+});
