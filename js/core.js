@@ -28,9 +28,10 @@ window.CV = {
       if (!t) return console.warn('update: unknown tab', tab);
       let sec = t.sections.find(s => s.id === section);
       if (!sec) { sec = { id: section, title: sectionTitle || section, items: [] }; t.sections.push(sec); }
-      const it = Object.assign({ added: date }, item);
-      const i = sec.items.findIndex(x => x.id === it.id);
-      if (i >= 0) sec.items[i] = Object.assign(sec.items[i], it, { updated: date }); else sec.items.unshift(it);
+      const i = sec.items.findIndex(x => x.id === item.id);
+      if (i < 0) sec.items.unshift(Object.assign({ added: date }, item));                 // brand-new card
+      else if (Object.keys(item).length === 1) Object.assign(sec.items[i], { added: date }); // {id} only: tag existing card as new
+      else Object.assign(sec.items[i], item, { updated: date });                          // content changed: UPDATED badge
     });
     (u.models || []).forEach(({ board, row }) => {
       const b = this.boards[board];

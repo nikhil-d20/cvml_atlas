@@ -51,6 +51,19 @@ CV.update({
 
 CV.update({
   date: '2026-10-19',
+  changelog: [{ text: 'YOLO27 (preview, not yet released) added to Real-time detection with preliminary COCO numbers from the official docs, plus an architecture page.', link: 'https://docs.ultralytics.com/models/yolo27/' }],
+  models: [
+    ['YOLO27n (preview)', 42.6, 3.0, 7.2, '0.44'], ['YOLO27s (preview)', 50.1, 11.8, 28.2, '0.64'],
+    ['YOLO27m (preview)', 56.1, 22.8, 65.0, '1.01'], ['YOLO27l (preview)', 60.5, 72.3, 165.3, '1.86']
+  ].map(([n, m, params, flops, rtx]) => ({ board: 'det-rt', row: {
+    n, d: '2026-10', fam: 'YOLO (Ultralytics)', m, params, flops,
+    notes: `ANNOUNCED, NOT RELEASED (no weights yet) — preliminary docs numbers; ${rtx} ms on RTX PRO 6000 TensorRT11 (not T4)${n.startsWith('YOLO27l') ? '; 61.4 mAP @800' : ''}${/27[ns]/.test(n) ? '; NMS by default, nms=False for NMS-free' : '; NMS-free query/attention design'}`,
+    src: 'https://docs.ultralytics.com/models/yolo27/' } })),
+  items: [{ tab: 'det', section: 'arch', item: { id: 'yolo', h: CV.tbl(['Version', 'Date', 'Key changes'], [['YOLOv1', '2015-06', 'S×S grid regression, single pass'], ['YOLOv2/9000', '2016-12', 'anchors (k-means), BN, high-res fine-tune'], ['YOLOv3', '2018-04', 'Darknet-53, 3 scales, logistic cls'], ['YOLOv4', '2020-04', 'CSPDarknet, SPP, PAN, Mosaic, CIoU, Mish'], ['YOLOv5', '2020-06', 'PyTorch, auto-anchor, SiLU, SPPF, strong engineering'], ['YOLOX', '2021-07', 'anchor-free, decoupled head, SimOTA'], ['YOLOv6 / v7', '2022-06/07', 'RepVGG re-param / E-ELAN, aux heads'], ['YOLOv8', '2023-01', 'anchor-free, C2f, decoupled head, TAL, DFL'], ['YOLOv9', '2024-02', 'GELAN, programmable gradient information (PGI)'], ['YOLOv10', '2024-05', 'NMS-free dual assignment, efficiency-driven design'], ['YOLO11', '2024-09', 'C3k2, C2PSA attention block'], ['YOLOv12', '2025-02', 'area attention (A2), R-ELAN, FlashAttention'], ['YOLO26', '2026-01', 'end-to-end NMS-free, DFL removed, ProgLoss + STAL (small targets), MuSGD optimizer; faster CPU inference'], ['<a href="#/arch/yolo27">YOLO27</a> (preview)', '2026-10 (announced)', 'N/S: conv with fine + coarse maps only and a training-only foreground alignment branch; M: transformer decoder over object queries; L: UltraViT backbone; NMS-free M/L. Not yet released.']]) } }]
+});
+
+CV.update({
+  date: '2026-10-19',
   changelog: [{ text: 'New AutoML for Computer Vision tab: what to automate, search algorithms (TPE, GP-BO, ASHA, PBT, NAS), 20+ tools with repo links and verified status, recipes (Ultralytics tuner, Optuna 5, Ray Tune, AutoGluon, threshold search), best practices and a budget estimator.' }],
   items: [].concat(
     ['map', 'when', 'cost'].map(id => ({ tab: 'automl', section: 'what', item: { id } })),

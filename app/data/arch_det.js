@@ -34,6 +34,32 @@ CV.arch({
 });
 
 CV.arch({
+  id: 'yolo27', name: 'YOLO27 (preview)', aka: 'yolo27 yolo 27 ultralytics', task: 'det', match: /^YOLO27/, date: '2026-10', org: 'Ultralytics',
+  code: 'https://github.com/ultralytics/ultralytics', paper: 'https://docs.ultralytics.com/models/yolo27/', tags: 'yolo27,ultralytics,preview,ultravit,query-based yolo,transformer decoder,nms-free,foreground alignment',
+  tagline: 'Announced, not yet released (Oct 2026): Ultralytics says YOLO27 is in final R&D with launch expected later this year, and weights are not public. Detection splits into two designs. N and S stay convolutional with a training-only alignment branch. M and L become query-based or attention-based models with NMS-free outputs. Preliminary COCO results: 42.6 (n) → 60.5 (l) mAP.',
+  anatomy: {
+    backbone: 'N/S: YOLO-style conv backbone with a widened early high-resolution stage. M: YOLO26-style convolutional backbone. L: UltraViT backbone with self-attention in its deepest stage.',
+    neck: 'N/S: predicts on only a fine and a coarse map (the medium-scale detection map is dropped). L: keeps the FPN/PAN neck.',
+    head: 'N/S: one-to-many head with NMS by default, or an NMS-free one-to-one head with nms=False. M: transformer decoder over a fixed set of object queries (NMS-free).',
+    loss: 'N/S: a training-only foreground alignment branch (removed at inference and export) narrows the gap between one-to-many supervision and the one-to-one head. Other loss and optimizer details are not published yet.'
+  },
+  pipeline: [
+    { k: 'input', t: 'Image', d: '640×640 (l also reported at 800)' },
+    { k: 'backbone', t: 'Backbone (size-dependent)', b: ['n / s: conv, wider early high-res stage', 'm: YOLO26-style conv backbone', 'l: UltraViT (self-attention in deepest stage)'] },
+    { k: 'neck', t: 'Neck', b: ['n / s: fine + coarse maps only (no medium map)', 'l: FPN / PAN'] },
+    { k: 'head', t: 'Head', b: ['n / s: one-to-many + NMS (default) or one-to-one, nms=False', 'm: transformer decoder over object queries (NMS-free)', 'n / s training only: foreground alignment branch'] },
+    { k: 'output', t: 'Detections', d: 'boxes, classes (NMS-free for m / l per docs)' }],
+  blocks: [
+    { t: 'n / s training vs inference', k: 'head', ops: ['Shared features (fine + coarse maps)', 'One-to-many head (rich supervision)', 'Foreground alignment branch (training only)', 'One-to-one head (nms=False) or NMS on one-to-many', 'Export: alignment branch removed'] },
+    { t: 'm: query-based detection', k: 'head', ops: ['YOLO26-style conv backbone features', 'Fixed set of object queries', 'Transformer decoder (self-attn, cross-attn)', 'Class + box per query (no NMS)'] }],
+  sections: [
+    { h: 'Preliminary results (official docs, COCO val, 640 px)', html: T(['Model', 'mAP 50-95', 'Params (M)', 'FLOPs (B)', 'CPU ONNX ms', 'RTX PRO 6000 TensorRT11 ms'], [['YOLO27n', '42.6', '3.0', '7.2', '16.1', '0.44'], ['YOLO27s', '50.1', '11.8', '28.2', '33.2', '0.64'], ['YOLO27m', '56.1', '22.8', '65.0', '74.8', '1.01'], ['YOLO27l', '60.5', '72.3', '165.3', '149.6', '1.86']]) +
+        '<p>YOLO27l reaches 61.4 mAP at 800 px (2.4 ms on RTX PRO 6000). GPU speeds are on an RTX PRO 6000 with TensorRT 11, <b>not a T4</b>, so they are not directly comparable with the T4 column of the real-time leaderboard. Values are pre-release and may change at launch.</p>' },
+    { h: 'Supported tasks (announced)', html: '<p>Detection, instance segmentation, semantic segmentation (Cityscapes), depth estimation (NYU Depth V2), classification (ImageNet), pose (COCO) and oriented boxes (DOTA v1). Tracking works with detect, segment, pose and OBB models. Only detection uses the two-design split. Numbers for the other tasks are not yet published in text form.</p>' },
+    { h: 'What to do now', html: '<ul><li>Keep shipping YOLO26 / RF-DETR / DEIMv2 in production. YOLO27 weights are not available yet.</li><li>When it launches, compare on <b>your</b> validation set and target hardware. The M/L query-based variants change the deployment profile: no NMS, but transformer decoders.</li><li>The weekly update will replace these preview numbers with release numbers.</li></ul>' }]
+});
+
+CV.arch({
   id: 'yolov12', name: 'YOLOv12', task: 'det', match: /^YOLOv12/, date: '2025-02', org: 'Univ. at Buffalo & UCAS (Tian, Ye, Doermann)',
   paper: 'https://arxiv.org/abs/2502.12524', code: 'https://github.com/sunsmarterjie/yolov12', tags: 'yolov12,area attention,r-elan,attention-centric yolo',
   tagline: 'Attention-centric YOLO: area attention (A²) and residual ELAN blocks bring self-attention into a real-time detector without losing speed.',
