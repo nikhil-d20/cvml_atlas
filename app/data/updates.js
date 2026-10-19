@@ -50,6 +50,17 @@ CV.update({
 });
 
 CV.update({
+  date: '2026-10-19',
+  changelog: [{ text: 'New AutoML for Computer Vision tab: what to automate, search algorithms (TPE, GP-BO, ASHA, PBT, NAS), 20+ tools with repo links and verified status, recipes (Ultralytics tuner, Optuna 5, Ray Tune, AutoGluon, threshold search), best practices and a budget estimator.' }],
+  items: [].concat(
+    ['map', 'when', 'cost'].map(id => ({ tab: 'automl', section: 'what', item: { id } })),
+    ['basic', 'tpe', 'gp', 'cmaes', 'mf', 'pbt', 'mo', 'nas'].map(id => ({ tab: 'automl', section: 'algos', item: { id } })),
+    ['hpo', 'cvauto', 'agents', 'cloud', 'legacy'].map(id => ({ tab: 'automl', section: 'tools', item: { id } })),
+    ['yolo', 'optuna', 'multi', 'thresh', 'autogluon', 'ray'].map(id => ({ tab: 'automl', section: 'recipes', item: { id } })),
+    ['space', 'practices', 'pitfalls'].map(id => ({ tab: 'automl', section: 'best', item: { id } })))
+});
+
+CV.update({
   date: '2026-10-03',
   changelog: [{ text: 'Added HSMNet (multi-resolution steganalysis classifier, 2025) to Classification and the Model Zoo, plus a card on steganalysis classifiers.', link: 'https://www.sciencedirect.com/science/article/abs/pii/S0020025525009600' }],
   items: [{

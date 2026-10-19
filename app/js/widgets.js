@@ -195,7 +195,34 @@
     draw();
   }
 
-  const W = { lrcurve, lrplot, prcalc, fpfn };
+  /* ---------------- AutoML budget estimator ---------------- */
+  function automlcost(el) {
+    const st = Object.assign({ hours: 4, trials: 64, gpus: 4, minFrac: 0.04, eta: 3 }, store.get('automlcost', {}));
+    el.innerHTML = `<div class="wform">
+      <label>Full training run (GPU-hours) <input data-k="hours" type="number" min="0.05" step="0.05" value="${st.hours}"></label>
+      <label>Trials <input data-k="trials" type="number" min="1" value="${st.trials}"></label>
+      <label>GPUs in parallel <input data-k="gpus" type="number" min="1" value="${st.gpus}"></label>
+      <label>Smallest budget (fraction of full) <input data-k="minFrac" type="number" min="0.01" max="1" step="0.01" value="${st.minFrac}"></label>
+      <label>Reduction factor η <input data-k="eta" type="number" min="2" max="6" value="${st.eta}"></label></div><div class="wout"></div>`;
+    const draw = () => {
+      const v = {}; el.querySelectorAll('input').forEach(i => { v[i.dataset.k] = +i.value; });
+      store.set('automlcost', v);
+      const n = Math.max(1, v.trials), eta = Math.max(2, v.eta), r = Math.min(1, Math.max(0.005, v.minFrac)), g = Math.max(1, v.gpus), h = Math.max(0.01, v.hours);
+      const s = Math.max(0, Math.floor(Math.log(1 / r) / Math.log(eta) + 1e-9));
+      let asha = 0, rows = [];
+      for (let i = 0; i <= s; i++) { const ni = Math.max(1, Math.floor(n / Math.pow(eta, i))), bi = Math.min(1, r * Math.pow(eta, i)); asha += ni * bi * h; rows.push([i, ni, (bi * 100).toFixed(1) + '%']); }
+      const full = n * h, f = x => x >= 100 ? x.toFixed(0) : x.toFixed(1);
+      el.querySelector('.wout').innerHTML = `<table class="lt"><thead><tr><th>Strategy</th><th class="num">GPU-hours</th><th class="num">Wall-clock on ${g} GPU(s)</th></tr></thead><tbody>
+        <tr><td>All ${n} trials at full budget</td><td class="num">${f(full)}</td><td class="num">${f(full / g)} h</td></tr>
+        <tr><td><b>Successive halving / ASHA</b> (${s + 1} rungs)</td><td class="num"><b>${f(asha)}</b></td><td class="num"><b>${f(asha / g)} h</b></td></tr>
+        <tr><td>Saving</td><td class="num">${(100 * (1 - asha / full)).toFixed(0)}%</td><td></td></tr></tbody></table>
+        <p class="note">Rungs: ${rows.map(([i, ni, b]) => `${ni} trial${ni > 1 ? 's' : ''} @ ${b}`).join(' → ')}. Add the final full retrain of the best 1–3 configs (${f(h)}–${f(3 * h)} GPU-h) and repeat-seed runs.</p>`;
+    };
+    el.querySelectorAll('input').forEach(i => i.addEventListener('input', draw));
+    draw();
+  }
+
+  const W = { lrcurve, lrplot, prcalc, fpfn, automlcost };
   window.CVWidgets = {
     mountAll(root) {
       root.querySelectorAll('.widget[data-widget]').forEach(el => {
