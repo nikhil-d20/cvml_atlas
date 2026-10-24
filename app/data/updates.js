@@ -95,3 +95,8 @@ CV.update({
     }
   }]
 });
+
+CV.update({
+  date: '2026-10-24',
+  changelog: [{ text: 'No new SOTA entries this week; news refreshed. YOLO27 is still a preview (docs: no launch date, no weights), so its rows are unchanged.', link: 'https://docs.ultralytics.com/models/yolo27/' }]
+});
